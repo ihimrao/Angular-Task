@@ -1,0 +1,250 @@
+@if (isOpen()) {
+  <div class="modal-backdrop modal-backdrop--drawer" (click)="onBackdropClick($event)">
+    <section
+      class="drawer user-form-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="user-form-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="drawer__header">
+        <div>
+          <span class="eyebrow">{{ isEdit() ? 'Member profile' : 'Grow your team' }}</span>
+          <h2 id="user-form-title">{{ isEdit() ? 'Edit member' : 'Invite a new member' }}</h2>
+          <p>
+            {{
+              isEdit()
+                ? 'Update access and organization details for this member.'
+                : 'We’ll send an email invitation with secure sign-in instructions.'
+            }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="icon-button"
+          aria-label="Close dialog"
+          [disabled]="saving()"
+          (click)="close()"
+        >
+          <app-icon name="x" [size]="19" />
+        </button>
+      </header>
+
+      <form class="drawer__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="form-section">
+          <div class="form-section__heading">
+            <span class="form-section__index">01</span>
+            <div>
+              <h3>Personal information</h3>
+              <p>The name and contact details shown in your directory.</p>
+            </div>
+          </div>
+          <div class="form-grid form-grid--two">
+            <label class="field">
+              <span class="field__label">First name</span>
+              <input
+                type="text"
+                formControlName="firstName"
+                autocomplete="given-name"
+                placeholder="e.g. Jordan"
+                [class.field__input--error]="
+                  hasError('firstName', 'required') || hasError('firstName', 'minlength')
+                "
+              />
+              @if (hasError('firstName', 'required')) {
+                <span class="field__error">First name is required.</span>
+              } @else if (hasError('firstName', 'minlength')) {
+                <span class="field__error">Use at least 2 characters.</span>
+              }
+            </label>
+            <label class="field">
+              <span class="field__label">Last name</span>
+              <input
+                type="text"
+                formControlName="lastName"
+                autocomplete="family-name"
+                placeholder="e.g. Lee"
+                [class.field__input--error]="
+                  hasError('lastName', 'required') || hasError('lastName', 'minlength')
+                "
+              />
+              @if (hasError('lastName', 'required')) {
+                <span class="field__error">Last name is required.</span>
+              } @else if (hasError('lastName', 'minlength')) {
+                <span class="field__error">Use at least 2 characters.</span>
+              }
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Work email</span>
+            <div class="input-with-icon">
+              <app-icon name="mail" [size]="17" />
+              <input
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                placeholder="name@company.com"
+                [class.field__input--error]="
+                  hasError('email', 'email') ||
+                  hasError('email', 'required') ||
+                  hasError('email', 'emailTaken')
+                "
+              />
+            </div>
+            @if (form.controls.email.pending) {
+              <span class="field__hint"
+                ><span class="spinner spinner--tiny"></span> Checking availability…</span
+              >
+            } @else if (hasError('email', 'required')) {
+              <span class="field__error">Work email is required.</span>
+            } @else if (hasError('email', 'email')) {
+              <span class="field__error">Enter a valid email address.</span>
+            } @else if (hasError('email', 'emailTaken')) {
+              <span class="field__error">This email is already used by another member.</span>
+            } @else {
+              <span class="field__hint">Use a company email for the best experience.</span>
+            }
+          </label>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section__heading">
+            <span class="form-section__index">02</span>
+            <div>
+              <h3>Organization access</h3>
+              <p>Set the member’s role and place in the organization.</p>
+            </div>
+          </div>
+          <div class="form-grid form-grid--two">
+            <label class="field">
+              <span class="field__label">Role</span>
+              <select
+                formControlName="roleId"
+                [class.field__input--error]="hasError('roleId', 'required')"
+              >
+                @for (role of roles(); track role.id) {
+                  <option [value]="role.id">{{ role.name }}</option>
+                }
+              </select>
+              @if (hasError('roleId', 'required')) {
+                <span class="field__error">Choose a role.</span>
+              }
+            </label>
+            <label class="field">
+              <span class="field__label">Department</span>
+              <select
+                formControlName="department"
+                [class.field__input--error]="hasError('department', 'required')"
+              >
+                @for (department of departments; track department) {
+                  <option [value]="department">{{ department }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <label class="field">
+            <span class="field__label">Job title</span>
+            <input
+              type="text"
+              formControlName="jobTitle"
+              autocomplete="organization-title"
+              placeholder="e.g. Product Designer"
+              [class.field__input--error]="
+                hasError('jobTitle', 'required') || hasError('jobTitle', 'minlength')
+              "
+            />
+            @if (hasError('jobTitle', 'required')) {
+              <span class="field__error">Job title is required.</span>
+            } @else if (hasError('jobTitle', 'minlength')) {
+              <span class="field__error">Use at least 2 characters.</span>
+            }
+          </label>
+        </div>
+
+        @if (isEdit()) {
+          <div class="form-section">
+            <div class="form-section__heading">
+              <span class="form-section__index">03</span>
+              <div>
+                <h3>Additional details</h3>
+                <p>Optional information shown on the member profile.</p>
+              </div>
+            </div>
+            <div class="form-grid form-grid--two">
+              <label class="field">
+                <span class="field__label">Phone number</span>
+                <input
+                  type="tel"
+                  formControlName="phone"
+                  autocomplete="tel"
+                  placeholder="+1 555 000 0000"
+                />
+              </label>
+              <label class="field">
+                <span class="field__label">Location</span>
+                <input
+                  type="text"
+                  formControlName="location"
+                  autocomplete="address-level2"
+                  placeholder="City, Country"
+                />
+              </label>
+            </div>
+          </div>
+        } @else {
+          <div class="form-section">
+            <div class="form-section__heading">
+              <span class="form-section__index">03</span>
+              <div>
+                <h3>Welcome note <span class="optional-label">Optional</span></h3>
+                <p>Add context to help your new teammate get started.</p>
+              </div>
+            </div>
+            <label class="field">
+              <textarea
+                rows="3"
+                formControlName="message"
+                maxlength="500"
+                placeholder="Welcome to the team! We’re glad to have you here."
+              ></textarea>
+              <span class="field__hint field__hint--right"
+                >{{ form.controls.message.value.length }}/500</span
+              >
+            </label>
+          </div>
+        }
+
+        @if (serverError()) {
+          <div class="inline-alert inline-alert--error" role="alert">
+            <app-icon name="alert" [size]="18" />
+            <span>{{ serverError() }}</span>
+          </div>
+        }
+
+        <footer class="drawer__footer">
+          <button
+            type="button"
+            class="button button--secondary"
+            [disabled]="saving()"
+            (click)="close()"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="button button--primary"
+            [disabled]="saving() || form.pending"
+          >
+            @if (saving()) {
+              <span class="spinner spinner--small"></span>
+              {{ isEdit() ? 'Saving…' : 'Sending…' }}
+            } @else {
+              <app-icon [name]="isEdit() ? 'check' : 'send'" [size]="17" />
+              {{ isEdit() ? 'Save changes' : 'Send invitation' }}
+            }
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}

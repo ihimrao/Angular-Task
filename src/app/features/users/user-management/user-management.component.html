@@ -1,0 +1,593 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <div class="breadcrumb">
+        <span>Organization</span><app-icon name="chevron-right" [size]="13" /><strong
+          >Members</strong
+        >
+      </div>
+      <div class="page-title-row">
+        <h1>People</h1>
+        <span class="count-pill">{{ statistics().total }} members</span>
+      </div>
+      <p>Manage your organization’s people, access levels, and account status from one place.</p>
+    </div>
+    <div class="page-header__actions">
+      <button
+        type="button"
+        class="button button--secondary"
+        [disabled]="exporting()"
+        (click)="exportCsv()"
+      >
+        @if (exporting()) {
+          <span class="spinner spinner--small"></span>
+        } @else {
+          <app-icon name="download" [size]="16" />
+        }
+        Export CSV
+      </button>
+      <button type="button" class="button button--primary" (click)="openInvite()">
+        <app-icon name="plus" [size]="17" />
+        Invite member
+      </button>
+    </div>
+  </header>
+
+  <div class="stats-grid" aria-label="Member statistics">
+    <article class="stat-card">
+      <div class="stat-card__top">
+        <span class="stat-card__icon stat-card__icon--indigo"
+          ><app-icon name="users" [size]="19"
+        /></span>
+        <span class="stat-trend"><app-icon name="trend-up" [size]="13" /> 8.2%</span>
+      </div>
+      <div class="stat-card__value">
+        @if (statsLoading()) {
+          <span class="skeleton skeleton--number"></span>
+        } @else {
+          {{ statistics().total }}
+        }
+      </div>
+      <p>Total members</p>
+      <div class="stat-card__bar"><span style="width: 100%"></span></div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__top">
+        <span class="stat-card__icon stat-card__icon--green"
+          ><app-icon name="user-check" [size]="19"
+        /></span>
+        <span class="stat-trend stat-trend--green">{{ statistics().activeRate }}% active</span>
+      </div>
+      <div class="stat-card__value">
+        @if (statsLoading()) {
+          <span class="skeleton skeleton--number"></span>
+        } @else {
+          {{ statistics().active }}
+        }
+      </div>
+      <p>Active members</p>
+      <div class="stat-card__bar">
+        <span class="stat-card__bar--green" [style.width.%]="statistics().activeRate"></span>
+      </div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__top">
+        <span class="stat-card__icon stat-card__icon--amber"
+          ><app-icon name="mail" [size]="19"
+        /></span>
+        <span class="stat-meta">Awaiting response</span>
+      </div>
+      <div class="stat-card__value">
+        @if (statsLoading()) {
+          <span class="skeleton skeleton--number"></span>
+        } @else {
+          {{ statistics().invited }}
+        }
+      </div>
+      <p>Pending invitations</p>
+      <div class="stat-card__bar">
+        <span
+          class="stat-card__bar--amber"
+          [style.width.%]="
+            statistics().total ? (statistics().invited / statistics().total) * 100 : 0
+          "
+        ></span>
+      </div>
+    </article>
+    <article class="stat-card">
+      <div class="stat-card__top">
+        <span class="stat-card__icon stat-card__icon--rose"
+          ><app-icon name="user-minus" [size]="19"
+        /></span>
+        <span class="stat-meta">Access restricted</span>
+      </div>
+      <div class="stat-card__value">
+        @if (statsLoading()) {
+          <span class="skeleton skeleton--number"></span>
+        } @else {
+          {{ statistics().suspended }}
+        }
+      </div>
+      <p>Suspended members</p>
+      <div class="stat-card__bar">
+        <span
+          class="stat-card__bar--rose"
+          [style.width.%]="
+            statistics().total ? (statistics().suspended / statistics().total) * 100 : 0
+          "
+        ></span>
+      </div>
+    </article>
+  </div>
+
+  <div class="directory-card">
+    <div class="directory-tabs" role="tablist" aria-label="Filter by status">
+      <button
+        type="button"
+        class="directory-tab"
+        [class.directory-tab--active]="filterForm.controls.status.value === 'all'"
+        (click)="updateStatus('all')"
+      >
+        All members <span>{{ statistics().total }}</span>
+      </button>
+      <button
+        type="button"
+        class="directory-tab"
+        [class.directory-tab--active]="filterForm.controls.status.value === 'active'"
+        (click)="updateStatus('active')"
+      >
+        Active <span>{{ statistics().active }}</span>
+      </button>
+      <button
+        type="button"
+        class="directory-tab"
+        [class.directory-tab--active]="filterForm.controls.status.value === 'invited'"
+        (click)="updateStatus('invited')"
+      >
+        Invited <span>{{ statistics().invited }}</span>
+      </button>
+      <button
+        type="button"
+        class="directory-tab"
+        [class.directory-tab--active]="filterForm.controls.status.value === 'suspended'"
+        (click)="updateStatus('suspended')"
+      >
+        Suspended <span>{{ statistics().suspended }}</span>
+      </button>
+    </div>
+
+    <div class="filter-bar" [formGroup]="filterForm">
+      <label class="search-box">
+        <app-icon name="search" [size]="17" />
+        <input
+          type="search"
+          formControlName="search"
+          placeholder="Search by name, email, or job title…"
+          aria-label="Search members"
+        />
+        @if (filterForm.controls.search.value) {
+          <button
+            type="button"
+            class="search-clear"
+            aria-label="Clear search"
+            (click)="filterForm.controls.search.setValue('')"
+          >
+            <app-icon name="x" [size]="14" />
+          </button>
+        }
+      </label>
+      <div class="filter-bar__selects">
+        <label class="filter-select">
+          <app-icon name="shield" [size]="15" />
+          <select formControlName="roleId" (change)="applyFilters()" aria-label="Filter by role">
+            <option value="all">All roles</option>
+            @for (role of roles(); track role.id) {
+              <option [value]="role.id">{{ role.name }}</option>
+            }
+          </select>
+          <app-icon name="chevron-down" [size]="13" />
+        </label>
+        <label class="filter-select">
+          <app-icon name="building" [size]="15" />
+          <select
+            formControlName="department"
+            (change)="applyFilters()"
+            aria-label="Filter by department"
+          >
+            <option value="all">All departments</option>
+            @for (department of departments; track department) {
+              <option [value]="department">{{ department }}</option>
+            }
+          </select>
+          <app-icon name="chevron-down" [size]="13" />
+        </label>
+        <button type="button" class="button button--ghost button--compact" (click)="clearFilters()">
+          <app-icon name="rotate-ccw" [size]="14" />
+          Reset
+        </button>
+      </div>
+    </div>
+
+    @if (selectionCount() > 0) {
+      <div class="bulk-bar" aria-live="polite">
+        <div class="bulk-bar__count">
+          <span>{{ selectionCount() }}</span>
+          {{ selectionCount() === 1 ? 'member' : 'members' }} selected
+        </div>
+        <div class="bulk-bar__actions">
+          <button
+            type="button"
+            class="button button--success-soft button--compact"
+            (click)="requestBulkAction('activate')"
+          >
+            <app-icon name="user-check" [size]="14" /> Activate
+          </button>
+          <button
+            type="button"
+            class="button button--danger-soft button--compact"
+            (click)="requestBulkAction('suspend')"
+          >
+            <app-icon name="user-minus" [size]="14" /> Suspend
+          </button>
+          <button type="button" class="text-button" (click)="clearSelection()">
+            Clear selection
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="state-panel state-panel--error">
+        <span class="state-panel__icon"><app-icon name="wifi-off" [size]="22" /></span>
+        <h2>We couldn’t load your members</h2>
+        <p>{{ error() }}</p>
+        <button type="button" class="button button--secondary" (click)="retry()">
+          <app-icon name="rotate-ccw" [size]="15" /> Try again
+        </button>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="members-table">
+          <thead>
+            <tr>
+              <th class="checkbox-cell">
+                <input
+                  type="checkbox"
+                  aria-label="Select all members on this page"
+                  [checked]="pageAllSelected()"
+                  [indeterminate]="pageSomeSelected()"
+                  #pageCheckbox
+                  (change)="togglePage(pageCheckbox.checked)"
+                />
+              </th>
+              <th [attr.aria-sort]="ariaSort('name')">
+                <button type="button" class="sort-button" (click)="sortBy('name')">
+                  Member
+                  <app-icon
+                    name="chevrons-up-down"
+                    [size]="13"
+                    [class.sort-button__icon--active]="query().sortBy === 'name'"
+                  />
+                </button>
+              </th>
+              <th>Role</th>
+              <th [attr.aria-sort]="ariaSort('department')">
+                <button type="button" class="sort-button" (click)="sortBy('department')">
+                  Department
+                  <app-icon
+                    name="chevrons-up-down"
+                    [size]="13"
+                    [class.sort-button__icon--active]="query().sortBy === 'department'"
+                  />
+                </button>
+              </th>
+              <th [attr.aria-sort]="ariaSort('status')">
+                <button type="button" class="sort-button" (click)="sortBy('status')">
+                  Status
+                  <app-icon
+                    name="chevrons-up-down"
+                    [size]="13"
+                    [class.sort-button__icon--active]="query().sortBy === 'status'"
+                  />
+                </button>
+              </th>
+              <th [attr.aria-sort]="ariaSort('lastActiveAt')">
+                <button type="button" class="sort-button" (click)="sortBy('lastActiveAt')">
+                  Last active
+                  <app-icon
+                    name="chevrons-up-down"
+                    [size]="13"
+                    [class.sort-button__icon--active]="query().sortBy === 'lastActiveAt'"
+                  />
+                </button>
+              </th>
+              <th class="actions-cell"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (loading()) {
+              @for (row of [1, 2, 3, 4, 5, 6, 7, 8]; track row) {
+                <tr class="skeleton-row">
+                  <td><span class="skeleton skeleton--checkbox"></span></td>
+                  <td>
+                    <div class="member-skeleton">
+                      <span class="skeleton skeleton--avatar"></span>
+                      <div>
+                        <span class="skeleton skeleton--line-lg"></span
+                        ><span class="skeleton skeleton--line-sm"></span>
+                      </div>
+                    </div>
+                  </td>
+                  <td><span class="skeleton skeleton--line-sm"></span></td>
+                  <td><span class="skeleton skeleton--line-md"></span></td>
+                  <td><span class="skeleton skeleton--pill"></span></td>
+                  <td><span class="skeleton skeleton--line-sm"></span></td>
+                  <td></td>
+                </tr>
+              }
+            } @else {
+              @for (member of result().items; track member.id) {
+                <tr [class.members-table__row--selected]="selectedIds().has(member.id)">
+                  <td class="checkbox-cell">
+                    <input
+                      type="checkbox"
+                      [attr.aria-label]="'Select ' + member.firstName + ' ' + member.lastName"
+                      [checked]="selectedIds().has(member.id)"
+                      #memberCheckbox
+                      (change)="toggleUser(member.id, memberCheckbox.checked)"
+                    />
+                  </td>
+                  <td>
+                    <button class="member-cell" type="button" (click)="openDetails(member)">
+                      <app-avatar
+                        [firstName]="member.firstName"
+                        [lastName]="member.lastName"
+                        [color]="member.avatarColor"
+                      />
+                      <span>
+                        <strong>{{ member.firstName }} {{ member.lastName }}</strong>
+                        <small>{{ member.email }}</small>
+                      </span>
+                    </button>
+                  </td>
+                  <td>
+                    <span class="role-pill">{{ roleName(member.roleId) }}</span>
+                  </td>
+                  <td>
+                    <div class="department-cell">
+                      <span class="department-dot" [style.background]="member.avatarColor"></span>
+                      {{ member.department }}
+                    </div>
+                  </td>
+                  <td><app-status-badge [status]="member.status" /></td>
+                  <td>
+                    <div class="last-active">
+                      <span>{{ formatRelative(member.lastActiveAt) }}</span>
+                      @if (member.lastActiveAt) {
+                        <small>{{ member.timezone.split(' (')[0] }}</small>
+                      }
+                    </div>
+                  </td>
+                  <td class="actions-cell">
+                    <div class="row-actions">
+                      <button
+                        type="button"
+                        class="icon-button icon-button--small"
+                        title="View details"
+                        aria-label="View details"
+                        (click)="openDetails(member)"
+                      >
+                        <app-icon name="eye" [size]="16" />
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-button icon-button--small"
+                        title="Edit member"
+                        aria-label="Edit member"
+                        (click)="openEdit(member)"
+                      >
+                        <app-icon name="edit" [size]="15" />
+                      </button>
+                      <button
+                        type="button"
+                        class="icon-button icon-button--small"
+                        [title]="
+                          member.status === 'suspended' ? 'Activate member' : 'Suspend member'
+                        "
+                        [attr.aria-label]="
+                          member.status === 'suspended' ? 'Activate member' : 'Suspend member'
+                        "
+                        (click)="requestStatusToggle(member)"
+                      >
+                        <app-icon
+                          [name]="member.status === 'suspended' ? 'user-check' : 'user-minus'"
+                          [size]="15"
+                        />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7">
+                    <div class="empty-state">
+                      <div class="empty-state__graphic">
+                        <span><app-icon name="search" [size]="24" /></span>
+                      </div>
+                      <h2>No members found</h2>
+                      <p>
+                        Try adjusting your search or filters to find the person you’re looking for.
+                      </p>
+                      <button
+                        type="button"
+                        class="button button--secondary button--compact"
+                        (click)="clearFilters()"
+                      >
+                        Clear filters
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (!loading() && result().items.length > 0) {
+        <div class="mobile-member-list">
+          @for (member of result().items; track member.id) {
+            <article
+              class="mobile-member-card"
+              [class.mobile-member-card--selected]="selectedIds().has(member.id)"
+            >
+              <div class="mobile-member-card__top">
+                <input
+                  type="checkbox"
+                  [attr.aria-label]="'Select ' + member.firstName"
+                  [checked]="selectedIds().has(member.id)"
+                  #memberCheckbox
+                  (change)="toggleUser(member.id, memberCheckbox.checked)"
+                />
+                <button type="button" class="member-cell" (click)="openDetails(member)">
+                  <app-avatar
+                    [firstName]="member.firstName"
+                    [lastName]="member.lastName"
+                    [color]="member.avatarColor"
+                  />
+                  <span>
+                    <strong>{{ member.firstName }} {{ member.lastName }}</strong>
+                    <small>{{ member.email }}</small>
+                  </span>
+                </button>
+                <app-status-badge [status]="member.status" />
+              </div>
+              <div class="mobile-member-card__meta">
+                <span><app-icon name="shield" [size]="13" />{{ roleName(member.roleId) }}</span>
+                <span><app-icon name="building" [size]="13" />{{ member.department }}</span>
+              </div>
+              <div class="mobile-member-card__actions">
+                <span class="last-active">Active {{ formatRelative(member.lastActiveAt) }}</span>
+                <div class="row-actions">
+                  <button
+                    type="button"
+                    class="icon-button icon-button--small"
+                    aria-label="View details"
+                    (click)="openDetails(member)"
+                  >
+                    <app-icon name="eye" [size]="16" />
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-button icon-button--small"
+                    aria-label="Edit member"
+                    (click)="openEdit(member)"
+                  >
+                    <app-icon name="edit" [size]="15" />
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-button icon-button--small"
+                    [attr.aria-label]="
+                      member.status === 'suspended' ? 'Activate member' : 'Suspend member'
+                    "
+                    (click)="requestStatusToggle(member)"
+                  >
+                    <app-icon
+                      [name]="member.status === 'suspended' ? 'user-check' : 'user-minus'"
+                      [size]="15"
+                    />
+                  </button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+
+      <footer class="table-footer">
+        <p>
+          Showing <strong>{{ recordStart() }}–{{ recordEnd() }}</strong> of
+          <strong>{{ result().total }}</strong> members
+        </p>
+        <div class="table-footer__controls">
+          <label class="page-size">
+            Rows
+            <select
+              #pageSizeSelect
+              [value]="query().pageSize"
+              (change)="changePageSize(pageSizeSelect.value)"
+            >
+              @for (size of pageSizes; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </label>
+          <nav class="pagination" aria-label="Member pagination">
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="result().page === 1"
+              aria-label="Previous page"
+              (click)="changePage(result().page - 1)"
+            >
+              <app-icon name="chevron-left" [size]="15" />
+            </button>
+            @for (page of pageNumbers(); track page) {
+              <button
+                type="button"
+                class="pagination__button"
+                [class.pagination__button--active]="page === result().page"
+                [attr.aria-current]="page === result().page ? 'page' : null"
+                (click)="changePage(page)"
+              >
+                {{ page }}
+              </button>
+            }
+            <button
+              type="button"
+              class="pagination__button"
+              [disabled]="result().page === totalPages()"
+              aria-label="Next page"
+              (click)="changePage(result().page + 1)"
+            >
+              <app-icon name="chevron-right" [size]="15" />
+            </button>
+          </nav>
+        </div>
+      </footer>
+    }
+  </div>
+</section>
+
+<app-user-form-dialog
+  [(isOpen)]="formOpen"
+  [mode]="formMode()"
+  [user]="editingUser()"
+  [roles]="roles()"
+  (saved)="memberSaved()"
+/>
+
+<app-user-details-drawer
+  [(isOpen)]="detailsOpen"
+  [user]="detailsUser()"
+  [roles]="roles()"
+  [activity]="detailsActivity()"
+  [loading]="detailsLoading()"
+  [statusUpdating]="statusUpdating()"
+  (editRequested)="openEdit($event)"
+  (statusToggleRequested)="requestStatusToggle($event)"
+/>
+
+<app-confirm-dialog
+  [isOpen]="confirmOpen()"
+  [title]="confirmConfig().title"
+  [message]="confirmConfig().message"
+  [confirmLabel]="confirmConfig().confirmLabel"
+  [destructive]="confirmConfig().destructive"
+  [tone]="confirmConfig().destructive ? 'default' : 'warning'"
+  [icon]="confirmConfig().icon"
+  [loading]="actionLoading()"
+  (confirmed)="confirmAction()"
+  (cancelled)="cancelConfirmation()"
+/>

@@ -1,0 +1,177 @@
+@if (isOpen()) {
+  <div class="modal-backdrop modal-backdrop--drawer" (click)="onBackdropClick($event)">
+    <aside
+      class="drawer details-drawer"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="member-details-title"
+      (click)="$event.stopPropagation()"
+    >
+      @if (user(); as member) {
+        <header class="details-drawer__hero">
+          <div class="details-drawer__top">
+            <span class="eyebrow">Member profile</span>
+            <button
+              type="button"
+              class="icon-button direct-icon-button"
+              aria-label="Close details"
+              (click)="close()"
+            >
+              <app-icon name="x" [size]="19" />
+            </button>
+          </div>
+          <div class="details-drawer__identity">
+            <app-avatar
+              [firstName]="member.firstName"
+              [lastName]="member.lastName"
+              [color]="member.avatarColor"
+              size="large"
+            />
+            <div>
+              <h2 id="member-details-title">{{ member.firstName }} {{ member.lastName }}</h2>
+              <p>{{ member.jobTitle }}</p>
+              <app-status-badge [status]="member.status" />
+            </div>
+          </div>
+          <div class="details-drawer__actions">
+            <button
+              type="button"
+              class="button button--secondary button--compact"
+              (click)="requestEdit()"
+            >
+              <app-icon name="edit" [size]="15" />
+              Edit profile
+            </button>
+            <button
+              type="button"
+              class="button button--compact"
+              [class.button--danger-soft]="
+                member.status === 'active' || member.status === 'invited'
+              "
+              [class.button--success-soft]="member.status === 'suspended'"
+              [disabled]="statusUpdating()"
+              (click)="requestStatusToggle()"
+            >
+              @if (statusUpdating()) {
+                <span class="spinner spinner--small"></span>
+              } @else {
+                <app-icon
+                  [name]="member.status === 'suspended' ? 'user-check' : 'user-minus'"
+                  [size]="15"
+                />
+              }
+              {{ member.status === 'suspended' ? 'Activate member' : 'Suspend access' }}
+            </button>
+          </div>
+        </header>
+
+        <div class="details-drawer__scroll">
+          <section class="detail-section">
+            <h3>Contact information</h3>
+            <div class="detail-list">
+              <div class="detail-row">
+                <span class="detail-row__icon"><app-icon name="mail" [size]="17" /></span>
+                <div>
+                  <span>Email address</span>
+                  <strong>{{ member.email }}</strong>
+                </div>
+              </div>
+              <div class="detail-row">
+                <span class="detail-row__icon"><app-icon name="phone" [size]="17" /></span>
+                <div>
+                  <span>Phone number</span>
+                  <strong>{{ member.phone || 'Not provided' }}</strong>
+                </div>
+              </div>
+              <div class="detail-row">
+                <span class="detail-row__icon"><app-icon name="map-pin" [size]="17" /></span>
+                <div>
+                  <span>Location</span>
+                  <strong>{{ member.location || 'Not provided' }}</strong>
+                </div>
+              </div>
+              <div class="detail-row">
+                <span class="detail-row__icon"><app-icon name="globe" [size]="17" /></span>
+                <div>
+                  <span>Timezone</span>
+                  <strong>{{ member.timezone }}</strong>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <h3>Organization</h3>
+            <div class="info-grid">
+              <div class="info-tile">
+                <span>Role</span>
+                <strong>{{ roleName() }}</strong>
+              </div>
+              <div class="info-tile">
+                <span>Department</span>
+                <strong>{{ member.department }}</strong>
+              </div>
+              <div class="info-tile">
+                <span>Joined</span>
+                <strong>{{ formatFullDate(member.createdAt) }}</strong>
+              </div>
+              <div class="info-tile">
+                <span>Last active</span>
+                <strong>{{ formatRelative(member.lastActiveAt) }}</strong>
+              </div>
+            </div>
+          </section>
+
+          <section class="detail-section">
+            <div class="detail-section__title-row">
+              <h3>Security</h3>
+              <span class="security-pill" [class.security-pill--on]="member.mfaEnabled">
+                <app-icon [name]="member.mfaEnabled ? 'shield-check' : 'shield'" [size]="14" />
+                {{ member.mfaEnabled ? 'MFA enabled' : 'MFA not enabled' }}
+              </span>
+            </div>
+            <p class="security-note">
+              @if (member.mfaEnabled) {
+                This member’s account is protected with multi-factor authentication.
+              } @else {
+                Ask this member to enable multi-factor authentication for stronger account security.
+              }
+            </p>
+          </section>
+
+          <section class="detail-section">
+            <h3>Recent activity</h3>
+            @if (loading()) {
+              <div class="activity-skeleton">
+                @for (row of [1, 2, 3]; track row) {
+                  <div class="skeleton skeleton--activity"></div>
+                }
+              </div>
+            } @else {
+              <div class="activity-list">
+                @for (item of activity(); track item.id) {
+                  <div class="activity-item">
+                    <span
+                      class="activity-item__dot"
+                      [class]="'activity-item__dot activity-item__dot--' + item.kind"
+                    ></span>
+                    <div>
+                      <strong>{{ item.title }}</strong>
+                      <p>{{ item.description }}</p>
+                      <time>{{ formatRelative(item.occurredAt) }}</time>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        </div>
+      } @else {
+        <div class="drawer-loading">
+          <span class="spinner"></span>
+          <p>Loading member details…</p>
+        </div>
+      }
+    </aside>
+  </div>
+}
