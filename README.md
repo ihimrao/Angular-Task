@@ -18,18 +18,6 @@ npm start
 
 Open [http://localhost:4200](http://localhost:4200).
 
-## Angular learning documentation
-
-If you know React/Next.js and are learning Angular, start with the [learning guide](./docs/README.md). It includes:
-
-- A six-week roadmap with checkpoints.
-- A React-to-Angular mental model.
-- A request-by-request project walkthrough.
-- Explanations of every RxJS operator used.
-- Reactive Forms, routing, guards, testing, styling, and accessibility.
-- Guided exercises from small UI changes to a real REST adapter.
-- A quick-reference glossary and dependency index.
-
 Useful commands:
 
 ```bash

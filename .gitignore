@@ -8,6 +8,9 @@
 /coverage/
 *.tsbuildinfo
 
+# Local learning notes
+/docs/
+
 # Local development tools and test artifacts
 /.vite/
 /.cache/
