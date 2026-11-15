@@ -438,7 +438,6 @@ The project uses:
 - A mobile card replacement for the desktop table.
 - A horizontal scroller only inside the role list.
 - `min-width: 0` on grid/flex children that must shrink.
-- Full-page overflow assertions in the screenshot script.
 
 The last point is important. An element inside an overflow container can still make the entire page wider if a grid item’s automatic minimum size prevents shrinking. Developers often fix this by adding `overflow: hidden` to the page, which hides the problem instead of solving it. The role page fix was `min-width: 0` on the grid items.
 
@@ -516,26 +515,8 @@ These settings catch mistakes that JavaScript would let through. When adding a f
 Formatting is handled by Prettier:
 
 ```bash
-npx prettier --check "src/**/*.{ts,html,scss}" "scripts/**/*.mjs" README.md
+npx prettier --check "src/**/*.{ts,html,scss}" README.md
 ```
-
-### Screenshot and browser verification
-
-[`scripts/capture-screenshots.mjs`](../scripts/capture-screenshots.mjs) uses `playwright-core` with a locally installed Chromium-compatible browser. It:
-
-1. Starts a browser context.
-2. Clears local persistence for deterministic seed data.
-3. Loads the member page.
-4. Waits for real rows rather than arbitrary timers.
-5. Verifies search.
-6. Opens member details.
-7. Opens the invite form.
-8. Loads roles.
-9. Changes a permission and verifies the unsaved-change guard blocks navigation.
-10. Captures desktop and mobile views.
-11. Fails on console errors or horizontal page overflow.
-
-This is an application smoke test plus visual regression foundation. A full production suite would normally use dedicated component and end-to-end test projects rather than keeping all browser verification in one script.
 
 ## Which concepts to study next
 

@@ -120,7 +120,6 @@ Use this page while reading the code. It is a compact index rather than a replac
 | `typescript`            | Type checking and compilation                   |
 | `vitest`                | Unit test runner                                |
 | `jsdom`                 | DOM environment for tests                       |
-| `playwright-core`       | Browser automation for screenshots/smoke checks |
 | `prettier`              | Consistent code/document formatting             |
 
 ## Glossary

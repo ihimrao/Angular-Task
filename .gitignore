@@ -11,9 +11,6 @@
 # Local development tools and test artifacts
 /.vite/
 /.cache/
-/playwright-report/
-/test-results/
-/blob-report/
 .sass-cache/
 *.log
 npm-debug.log*

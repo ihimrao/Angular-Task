@@ -35,13 +35,6 @@ Useful commands:
 ```bash
 npm run build       # strict production build
 npm test            # repository and shell tests
-npm run screenshots # regenerate documentation screenshots
-```
-
-The screenshot script uses the installed Brave executable by default. On another machine, set a Chromium-compatible executable:
-
-```bash
-BRAVE_PATH="/path/to/chrome" APP_URL="http://127.0.0.1:4200" npm run screenshots
 ```
 
 ## Screenshots
@@ -181,8 +174,7 @@ location.reload();
 
 - Production build succeeds with no compiler warnings.
 - Unit checks cover application creation, filtering and pagination, invitation/status updates, system-role deletion protection, and custom role lifecycle.
-- Automated browser verification captures desktop/mobile layouts and verifies search, member details, invitation form rendering, role loading, and the unsaved-change route guard.
-- Layouts were checked at 1440 px desktop and 390 px mobile widths.
+- Desktop and mobile layouts were verified at 1440 px and 390 px widths.
 
 ## Known limitations
 
